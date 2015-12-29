@@ -66,34 +66,10 @@ type Boomer struct {
 	results chan *result
 }
 
-func (b *Boomer) startProgress() {
-	if b.Output != "" {
-		return
-	}
-	b.bar = pb.New(b.N)
-	b.bar.Format("Bom !")
-	b.bar.Start()
-}
-
-func (b *Boomer) finalizeProgress() {
-	if b.Output != "" {
-		return
-	}
-	b.bar.Finish()
-}
-
-func (b *Boomer) incProgress() {
-	if b.Output != "" {
-		return
-	}
-	b.bar.Increment()
-}
-
 // Run makes all the requests, prints the summary. It blocks until
 // all work is done.
 func (b *Boomer) Run() {
 	b.results = make(chan *result, b.N)
-	b.startProgress()
 
 	start := time.Now()
 	c := make(chan os.Signal, 1)
@@ -106,7 +82,6 @@ func (b *Boomer) Run() {
 	}()
 
 	b.runWorkers()
-	b.finalizeProgress()
 	newReport(b.N, b.results, b.Output, time.Now().Sub(start)).finalize()
 	close(b.results)
 }
@@ -140,7 +115,7 @@ func (b *Boomer) runWorker(wg *sync.WaitGroup, ch chan *http.Request) {
 		}
 
 		wg.Done()
-		b.incProgress()
+		// b.incProgress()
 		b.results <- &result{
 			statusCode:    code,
 			duration:      time.Now().Sub(s),
