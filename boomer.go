@@ -7,13 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
-	"os/signal"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/rakyll/pb"
 )
 
 type result struct {
@@ -50,10 +46,6 @@ type Boomer struct {
 	// DisableKeepAlives is an option to prevents re-use of TCP connections between different HTTP requests
 	DisableKeepAlives bool
 
-	// Output represents the output type. If "csv" is provided, the
-	// output will be dumped as a csv stream.
-	Output string
-
 	// ProxyAddr is the address of HTTP proxy server in the format on "host:port".
 	// Optional.
 	ProxyAddr *url.URL
@@ -62,28 +54,21 @@ type Boomer struct {
 	// to be fully consumed.
 	ReadAll bool
 
-	bar     *pb.ProgressBar
 	results chan *result
 }
 
 // Run makes all the requests, prints the summary. It blocks until
 // all work is done.
-func (b *Boomer) Run() {
+func (b *Boomer) Run() *ReportResult {
 	b.results = make(chan *result, b.N)
 
 	start := time.Now()
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-
-	go func() {
-		<-c
-		// TODO(jbd): Progress bar should not be finalized.
-		newReport(b.N, b.results, b.Output, time.Now().Sub(start)).finalize()
-	}()
 
 	b.runWorkers()
-	newReport(b.N, b.results, b.Output, time.Now().Sub(start)).finalize()
+	result := newReport(b.N, b.results, time.Now().Sub(start)).finalize()
 	close(b.results)
+
+	return result
 }
 
 func (b *Boomer) runWorker(wg *sync.WaitGroup, ch chan *http.Request) {

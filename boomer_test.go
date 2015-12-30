@@ -25,7 +25,8 @@ func TestN(t *testing.T) {
 		N:       20,
 		C:       2,
 	}
-	boomer.Run()
+	result := boomer.Run()
+	t.Logf("%+v", *result)
 	if count != 20 {
 		t.Errorf("Expected to boom 20 times, found %v", count)
 	}
@@ -54,7 +55,10 @@ func TestQps(t *testing.T) {
 		}
 		wg.Done()
 	})
-	go boomer.Run()
+	go func() {
+		result := boomer.Run()
+		t.Logf("%+v", *result)
+	}()
 	wg.Wait()
 }
 
@@ -81,7 +85,8 @@ func TestRequest(t *testing.T) {
 		N:       1,
 		C:       1,
 	}
-	boomer.Run()
+	result := boomer.Run()
+	t.Logf("%+v", *result)
 	if uri != "/" {
 		t.Errorf("Uri is expected to be /, %v is found", uri)
 	}
@@ -114,7 +119,8 @@ func TestBody(t *testing.T) {
 		N:           10,
 		C:           1,
 	}
-	boomer.Run()
+	result := boomer.Run()
+	t.Logf("%+v", *result)
 	if count != 10 {
 		t.Errorf("Expected to boom 10 times, found %v", count)
 	}
